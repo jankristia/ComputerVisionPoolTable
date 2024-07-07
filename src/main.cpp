@@ -1,6 +1,8 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
+#include "../include/TableDetector.hpp"
+
 int main(int argc, char** argv) {
 
     if(argc != 2) {
@@ -19,6 +21,12 @@ int main(int argc, char** argv) {
         std::cout << "Error opening video stream or file" << std::endl;
         return -1;
     }
+
+    // Capture first frame
+    cv::Mat frame;
+    cap >> frame;
+    TableDetector tableDetector;
+    tableDetector.detectTable(frame);
 
     while(1){
 
