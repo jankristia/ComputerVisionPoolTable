@@ -2,5 +2,11 @@
 
 class TableDetector {
     public:
-        void detectTable(cv::Mat frame);
+        std::vector<cv::Vec2f> detectedLines;
+        // make vector of circles
+        std::vector<cv::Vec3f> detectedBalls;
+        cv::Mat roiTable;
+        
+        void setTableLines(cv::Mat frame);
+        void setRoiTable(cv::Mat frame);
 };
