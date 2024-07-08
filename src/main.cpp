@@ -1,6 +1,9 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
+#include "../include/TableDetector.hpp"
+#include "../include/BallDetector.hpp"
+
 int main(int argc, char** argv) {
 
     if(argc != 2) {
@@ -20,31 +23,60 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    while(1){
-
+    // Capture first frame
     cv::Mat frame;
-    
-    // Capture frame-by-frame
     cap >> frame;
 
-    // If the frame is empty, break immediately
-    if (frame.empty()) {
-        break;
-    }
-    // Display the resulting frame
-    cv::imshow( "Frame", frame );
+    // Detect the lines of the pool table in first frame
+    TableDetector tableDetector;
+    tableDetector.setTableLines(frame);
+    std::vector<cv::Vec2f> detectedLines = tableDetector.detectedLines;
+    tableDetector.setRoiTable(frame);
+    
+    // BallDetector ballDetector;
+    // ballDetector.detectBalls(frame);
 
-    // Press  ESC on keyboard to exit
-    char c=(char)cv::waitKey(25);
-    if(c==27)
-        break;
-    }
 
-    // When everything done, release the video capture object
-    cap.release();
 
-    // Closes all the frames
-    cv::destroyAllWindows();
+   
+   
+   
+   
+   
+
+   
+   
+   
+   
+   
+   
+   
+   
+    // while(1){
+
+    // cv::Mat frame;
+    
+    // // Capture frame-by-frame
+    // cap >> frame;
+
+    // // If the frame is empty, break immediately
+    // if (frame.empty()) {
+    //     break;
+    // }
+    // // Display the resulting frame
+    // cv::imshow( "Frame", frame );
+
+    // // Press  ESC on keyboard to exit
+    // char c=(char)cv::waitKey(25);
+    // if(c==27)
+    //     break;
+    // }
+
+    // // When everything done, release the video capture object
+    // cap.release();
+
+    // // Closes all the frames
+    // cv::destroyAllWindows();
 
     return 0;
   }
