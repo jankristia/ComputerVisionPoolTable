@@ -4,6 +4,10 @@ class BallDetector {
     public:
         std::vector<cv::Vec3f> detectedBalls;
         std::vector<cv::Vec2f> tableBorders;
-        
-        void detectBalls(cv::Mat frame);
+        cv::Vec3f tableColor;
+
+        void setTableColor(cv::Mat frame);
+        bool isInRange(cv::Vec3f testColor, cv::Vec3f refrenceColor, int threshold);
+
+        void detectWhiteBall(cv::Mat frame);
 };
