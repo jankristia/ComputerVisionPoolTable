@@ -2,6 +2,18 @@
 #include <iostream>
 
 
+BallDetector::BallDetector(): colorToHueMap({
+        {YELLOW, 20},
+        {BLUE, 106},
+        {RED, 170},
+        {PURPLE, 119},
+        {ORANGE, 7},
+        {GREEN, 77},
+        {MAROON, 9},
+        {WHITE, 42},
+        {BLACK, 90}
+    }) {}
+
 void BallDetector::setTableColor(cv::Mat frame) {
     // Convert the frame to HSV
     cv::Mat hsvFrame;
@@ -27,15 +39,16 @@ bool BallDetector::isInRange(cv::Vec3f testColor, cv::Vec3f refrenceColor, int t
     return diff < threshold;
 }
 
-void BallDetector::detectWhiteBall(cv::Mat frame) {
+void BallDetector::segmentBallColors(cv::Mat frame) {
     // Convert the frame to HSV
     cv::Mat hsvFrame;
     cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
 
     // initialize image in same size as frame
     cv::Mat whiteBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
+    cv::Mat coloredBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
     
-    cv::Vec3f whiteBallColor = cv::Vec3f(42, 80, 200);
+    cv::Vec3f whiteBallColor = cv::Vec3f(colorToHueMap.at(WHITE), 0, 0);
     // Loop through the frame and find the white ball
     for (int i = 0; i < frame.rows; i++) {
         for (int j = 0; j < frame.cols; j++) {
@@ -45,39 +58,53 @@ void BallDetector::detectWhiteBall(cv::Mat frame) {
             } else {
                 whiteBallMask.at<uchar>(i, j) = 0;
             }
+            if (isInRange(pixel, cv::Vec3f(colorToHueMap.at(RED), 0, 0), 30)) {
+                coloredBallMask.at<uchar>(i, j) = 255;
+            } else {
+                coloredBallMask.at<uchar>(i, j) = 0;
+            }
         }
     }
 
     // Mabye use morphological operations to remove noise
 
-    cv::namedWindow("White ball mask", cv::WINDOW_AUTOSIZE);
-    cv::imshow("White ball mask", whiteBallMask);
-
-    cv::namedWindow("White ball detection", cv::WINDOW_AUTOSIZE);
-    cv::imshow("White ball detection", frame);
-
-    cv::Mat detectedBallPointsMask = cv::Mat::zeros(frame.size(), CV_8UC1);
-    // Slide 25*25 window over the whiteBallMask and count number of white pixels in each window
-    int windowSize = 30;
-    int whiteThreshold = 100;
+    cv::Mat detectedWhiteBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
+    cv::Mat detectedColoredBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
+    
+    int windowSize = 29;
+    int whiteThreshold = 50;
+    int redThreshold = 50;
     for (int i = 0; i < whiteBallMask.rows - windowSize; i++) {
         for (int j = 0; j < whiteBallMask.cols - windowSize; j++) {
             int whiteCount = 0;
-            for (int k = i; k < i + windowSize; k++) {
-                for (int l = j; l < j + windowSize; l++) {
+            int redCount = 0;
+            for (int k = i - (windowSize-1)/2; k < i + (windowSize-1)/2; k++) {
+                for (int l = j - (windowSize-1)/2; l < j + (windowSize-1)/2; l++) {
                     if (whiteBallMask.at<uchar>(k, l) == 255) {
                         whiteCount++;
+                    }
+                    if (coloredBallMask.at<uchar>(k, l) == 255) {
+                        redCount++;
                     }
                 }
             }
             if (whiteCount > whiteThreshold) {
-                detectedBallPointsMask.at<uchar>(i, j) = 255;
+                detectedWhiteBallMask.at<uchar>(i, j) = 255;
+                frame.at<cv::Vec3b>(i, j) = cv::Vec3b(255, 255, 255);
             } else {
-                detectedBallPointsMask.at<uchar>(i, j) = 0;
+                detectedWhiteBallMask.at<uchar>(i, j) = 0;
+            }
+            if (redCount > redThreshold) {
+                detectedColoredBallMask.at<uchar>(i, j) = 255;
+                frame.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 0);
+            } else {
+                detectedColoredBallMask.at<uchar>(i, j) = 0;
             }
         }
     }
+    // Add some morphological operations to remove noise?
 
-    cv::namedWindow("Detected ball points", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Detected ball points", detectedBallPointsMask);
+
+    cv::namedWindow("Frame", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Frame", frame);
 }

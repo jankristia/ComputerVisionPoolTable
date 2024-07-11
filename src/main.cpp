@@ -36,29 +36,29 @@ int main(int argc, char** argv) {
     std::vector<cv::Vec2f> detectedLines = tableDetector.detectedLines;
     tableDetector.setRoiTable(frame);
     
-    BallDetector ballDetector;
-    ballDetector.setTableColor(tableDetector.roiTable);
-    ballDetector.detectWhiteBall(tableDetector.roiTable);
+    // BallDetector ballDetector;
+    // ballDetector.setTableColor(tableDetector.roiTable);
+    // ballDetector.segmentBallColors(tableDetector.roiTable);
 
 
 
-
+    cv::waitKey(0);
 
 
 
 
 // --------------------- TESTING ---------------------
-    // // Convert frame to HSV
-    // cv::Mat hsvImage;
-    // cv::cvtColor(frame, hsvImage, cv::COLOR_BGR2HSV);
+    // Convert frame to HSV
+    cv::Mat hsvImage;
+    cv::cvtColor(frame, hsvImage, cv::COLOR_BGR2HSV);
 
-    // cv::namedWindow("Normal image", cv::WINDOW_AUTOSIZE); 
-	// cv::imshow("Normal image", frame);
+    cv::namedWindow("Normal image", cv::WINDOW_AUTOSIZE); 
+	cv::imshow("Normal image", frame);
 
-    // cv::namedWindow("Click image", cv::WINDOW_AUTOSIZE); 
-	// cv::imshow("Click image", hsvImage);
+    cv::namedWindow("Click image", cv::WINDOW_AUTOSIZE); 
+	cv::imshow("Click image", hsvImage);
 
-    // cv::setMouseCallback("Click image", printMeanAroundClick, &hsvImage);
+    cv::setMouseCallback("Click image", printMeanAroundClick, &hsvImage);
    
     cv::waitKey(0);
    
@@ -163,7 +163,7 @@ void printMeanAroundClick(int event, int x, int y, int flags, void* userdata) {
             meanR = sumR/validNeighbours;
 
             std::cout << "Press detected at: x = " << x << " and y = " << y << "\n";
-            std::cout << "Mean BGR values arounf pixel: \n";
+            std::cout << "Mean BGR values around pixel: \n";
             std::cout << "B: " << meanB << "\n";
             std::cout << "G: " << meanG << "\n";
             std::cout << "R: " << meanR << "\n";
