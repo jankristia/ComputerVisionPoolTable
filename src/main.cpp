@@ -1,104 +1,70 @@
 #include <opencv2/opencv.hpp>
+#include <opencv2/tracking.hpp>
 #include <iostream>
 
 #include "../include/TableDetector.hpp"
 #include "../include/BallDetector.hpp"
+#include "../include/BallTracker.hpp"
+#include "../include/MeanAveragePrecision.hpp"
 
 void printBGR(int event, int x, int y, int flags, void* userdata);
 void printMeanAroundClick(int event, int x, int y, int flags, void* userdata);
 
 int main(int argc, char** argv) {
 
-    if(argc != 2) {
-        std::cout << "Usage: " << argv[0] << " <imageDirectory path> " << std::endl;
+    if(argc != 3) {
+        std::cout << "Usage: " << argv[0] << " <videoDirectory path> " << "<groundTruthPath>" << std::endl;
         return -1;
     }
 
-    std::string imageDirectory = argv[1];
+    std::string videoDirectory = argv[1];
+    std::string groundTruthPath = argv[2];
 
-    // Create a VideoCapture object and open the input file
-    // If the input is the web camera, pass 0 instead of the video file name
-    cv::VideoCapture cap(imageDirectory); 
+    cv::VideoCapture video(videoDirectory);
 
-    // Check if camera opened successfully
-    if(!cap.isOpened()){
+    if(!video.isOpened()){
         std::cout << "Error opening video stream or file" << std::endl;
         return -1;
     }
 
-    // Capture first frame
     cv::Mat frame;
-    cap >> frame;
+    video.read(frame);
 
-    // Detect the lines of the pool table in first frame
-    TableDetector tableDetector;
-    tableDetector.setTableLines(frame);
-    std::vector<cv::Vec2f> detectedLines = tableDetector.detectedLines;
-    tableDetector.setRoiTable(frame);
-    
-    // BallDetector ballDetector;
-    // ballDetector.setTableColor(tableDetector.roiTable);
-    // ballDetector.segmentBallColors(tableDetector.roiTable);
+    MeanAveragePrecision map;
+    double meanAveragePrecision = map.meanAveragePrecisionCalculation(frame, groundTruthPath);
+    std::cout << "Mean Average Precision: " << meanAveragePrecision << std::endl;
 
 
 
-    cv::waitKey(0);
+
+
+
+
+
+
+
 
 
 
 
 // --------------------- TESTING ---------------------
     // Convert frame to HSV
-    cv::Mat hsvImage;
-    cv::cvtColor(frame, hsvImage, cv::COLOR_BGR2HSV);
+    // cv::Mat hsvImage;
+    // cv::cvtColor(frame, hsvImage, cv::COLOR_BGR2HSV);
 
-    cv::namedWindow("Normal image", cv::WINDOW_AUTOSIZE); 
-	cv::imshow("Normal image", frame);
+    // cv::namedWindow("Normal image", cv::WINDOW_AUTOSIZE); 
+	// cv::imshow("Normal image", frame);
 
-    cv::namedWindow("Click image", cv::WINDOW_AUTOSIZE); 
-	cv::imshow("Click image", hsvImage);
+    // cv::namedWindow("Click image", cv::WINDOW_AUTOSIZE); 
+	// cv::imshow("Click image", hsvImage);
 
-    cv::setMouseCallback("Click image", printMeanAroundClick, &hsvImage);
+    // cv::setMouseCallback("Click image", printBGR, &hsvImage);
    
     cv::waitKey(0);
-   
-   
-   
-
-   
-   
-   
-   
-
 
 
    
-   
-    // while(1){
 
-    // cv::Mat frame;
-    
-    // // Capture frame-by-frame
-    // cap >> frame;
-
-    // // If the frame is empty, break immediately
-    // if (frame.empty()) {
-    //     break;
-    // }
-    // // Display the resulting frame
-    // cv::imshow( "Frame", frame );
-
-    // // Press  ESC on keyboard to exit
-    // char c=(char)cv::waitKey(25);
-    // if(c==27)
-    //     break;
-    // }
-
-    // // When everything done, release the video capture object
-    // cap.release();
-
-    // // Closes all the frames
-    // cv::destroyAllWindows();
 
     return 0;
   }
