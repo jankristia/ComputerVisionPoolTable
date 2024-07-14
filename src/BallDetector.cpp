@@ -10,16 +10,14 @@ BallDetector::BallDetector(): colorToHueMap({
         {ORANGE, 7},
         {GREEN, 77},
         {MAROON, 9},
-        {WHITE, 42},
+        {WHITE, 35},
         {BLACK, 90}
     }) {}
 
 void BallDetector::setTableColor(cv::Mat frame) {
-    // Convert the frame to HSV
     cv::Mat hsvFrame;
     cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
 
-    // Find the color of the table by averaging the color of the 15x15 middle pixels of the frame
     cv::Vec3f tableColor = cv::Vec3f(0, 0, 0);
     for (int i = frame.rows / 2 - 7; i < frame.rows / 2 + 8; i++) {
         for (int j = frame.cols / 2 - 7; j < frame.cols / 2 + 8; j++) {
@@ -29,82 +27,170 @@ void BallDetector::setTableColor(cv::Mat frame) {
     tableColor /= 225;
 
     this->tableColor = tableColor;
-
-    std::cout << "Table color: " << tableColor << std::endl;
 }
 
-bool BallDetector::isInRange(cv::Vec3f testColor, cv::Vec3f refrenceColor, int threshold) {
-    // Only testing hue
-    double diff = std::abs(testColor[0] - refrenceColor[0]);
+bool BallDetector::isInRange(cv::Vec3f testColor, cv::Vec3f refrenceColor, int threshold,  int indexToCheck) {
+    double diff = std::abs(testColor[indexToCheck] - refrenceColor[indexToCheck]);
     return diff < threshold;
 }
 
-void BallDetector::segmentBallColors(cv::Mat frame) {
-    // Convert the frame to HSV
-    cv::Mat hsvFrame;
-    cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
 
-    // initialize image in same size as frame
-    cv::Mat whiteBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
-    cv::Mat coloredBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
-    
-    cv::Vec3f whiteBallColor = cv::Vec3f(colorToHueMap.at(WHITE), 0, 0);
-    // Loop through the frame and find the white ball
+void BallDetector::detectBalls(cv::Mat frame) {
+    this->setTableColor(frame);
+    // loop through the frame and sett all pixels with table color to black
+    cv::Mat hsvFrame;
+    cv:: Mat tempFrame = frame;
+    cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
     for (int i = 0; i < frame.rows; i++) {
         for (int j = 0; j < frame.cols; j++) {
             cv::Vec3b pixel = hsvFrame.at<cv::Vec3b>(i, j);
-            if (isInRange(pixel, whiteBallColor, 20)) {
-                whiteBallMask.at<uchar>(i, j) = 255;
-            } else {
-                whiteBallMask.at<uchar>(i, j) = 0;
-            }
-            if (isInRange(pixel, cv::Vec3f(colorToHueMap.at(RED), 0, 0), 30)) {
-                coloredBallMask.at<uchar>(i, j) = 255;
-            } else {
-                coloredBallMask.at<uchar>(i, j) = 0;
+            if (isInRange(pixel, tableColor, 2)) {
+                tempFrame.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 0);
             }
         }
     }
 
-    // Mabye use morphological operations to remove noise
+    cv::Mat grayFrame;
+    cv::cvtColor(tempFrame, grayFrame, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(grayFrame, grayFrame, cv::Size(7, 7), 2, 2);
 
-    cv::Mat detectedWhiteBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
-    cv::Mat detectedColoredBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
-    
-    int windowSize = 29;
-    int whiteThreshold = 50;
-    int redThreshold = 50;
-    for (int i = 0; i < whiteBallMask.rows - windowSize; i++) {
-        for (int j = 0; j < whiteBallMask.cols - windowSize; j++) {
-            int whiteCount = 0;
-            int redCount = 0;
-            for (int k = i - (windowSize-1)/2; k < i + (windowSize-1)/2; k++) {
-                for (int l = j - (windowSize-1)/2; l < j + (windowSize-1)/2; l++) {
-                    if (whiteBallMask.at<uchar>(k, l) == 255) {
-                        whiteCount++;
-                    }
-                    if (coloredBallMask.at<uchar>(k, l) == 255) {
-                        redCount++;
+    std::vector<cv::Vec3f> circles;
+    cv::HoughCircles(grayFrame, circles, cv::HOUGH_GRADIENT, 1, 16, 1, 11, 7, 13);
+
+    this->detectedBalls = circles;
+}
+
+void BallDetector::setBoundingBoxes() {
+    for(int i = 0; i < this->detectedBalls.size(); i++) {
+        cv::Rect2d boundingBox = cv::Rect2d(cvRound(this->detectedBalls[i][0] - this->detectedBalls[i][2]), 
+                                            cvRound(this->detectedBalls[i][1] - this->detectedBalls[i][2]),
+                                            cvRound(2*this->detectedBalls[i][2]), 
+                                            cvRound(2*this->detectedBalls[i][2]));
+        this->boundingBoxes.push_back(boundingBox);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void BallDetector::detectWhiteBall(cv::Mat frame) {
+
+            cv::Mat hsvFrame;
+            cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
+
+            std::vector<cv::Vec3f> detectedBallsTemp = this->detectedBalls;
+
+            // Find the white ball
+            int whiteIndex = 0;
+            int largestWhitePart = 0;
+            for(int i = 0; i < detectedBallsTemp.size(); i++) {
+                cv::Vec3b pixel = hsvFrame.at<cv::Vec3b>(cvRound(detectedBallsTemp[i][1]), cvRound(detectedBallsTemp[i][0]));
+
+                cv::circle(frame, cv::Point(cvRound(detectedBallsTemp[i][0]), cvRound(detectedBallsTemp[i][1])), 1, cv::Scalar(0, 0, 255), 2);
+                
+                // Thresholds for calling pxel a color
+                int whiteTreshold = 5;
+                int colorTreshold = 5;
+                int blackTreshold = 5;
+
+                // Counter variables
+                int whiteCount = 0;
+                int colorCount = 0;
+                int blackCount = 0;
+
+                // Loop through a square around the pixel, go radius in each direction
+                int radius = cvRound(detectedBallsTemp[i][2]);
+                int x = cvRound(detectedBallsTemp[i][0]);
+                int y = cvRound(detectedBallsTemp[i][1]);
+                for(int j = x - radius - 3; j < x + radius + 3; j++) {
+                    for(int k = y - radius - 3; k < y + radius + 3; k++) {
+                        cv::Vec3b pixel = hsvFrame.at<cv::Vec3b>(k, j);
+                        if(this->isInRange(pixel, cv::Vec3f(colorToHueMap.at(WHITE), 0, 0), whiteTreshold, 0)){
+                            whiteCount++;
+                        } else if(this->isInRange(pixel, cv::Vec3f(colorToHueMap.at(BLACK), 0, 0), blackTreshold)){
+                            blackCount++;
+                        } else if(this->isInRange(pixel, cv::Vec3f(colorToHueMap.at(RED), 0, 0), colorTreshold) ||
+                                    this->isInRange(pixel, cv::Vec3f(colorToHueMap.at(BLUE), 0, 0), colorTreshold) ||
+                                    this->isInRange(pixel, cv::Vec3f(colorToHueMap.at(ORANGE), 0, 0), colorTreshold) ||
+                                    this->isInRange(pixel, cv::Vec3f(colorToHueMap.at(PURPLE), 0, 0), colorTreshold) ||
+                                    this->isInRange(pixel, cv::Vec3f(colorToHueMap.at(YELLOW), 0, 0), colorTreshold) ||
+                                    this->isInRange(pixel, cv::Vec3f(colorToHueMap.at(GREEN), 0, 0), colorTreshold) ||
+                                    this->isInRange(pixel, cv::Vec3f(colorToHueMap.at(MAROON), 0, 0), colorTreshold)){
+                            colorCount++;
+                            colorCount++;
+                        } 
                     }
                 }
+
+                if((whiteCount-blackCount-colorCount)/float(radius*radius) >= largestWhitePart ) {
+                    whiteIndex = i;
+                    largestWhitePart = (whiteCount)/float(radius*radius);
+                }
             }
-            if (whiteCount > whiteThreshold) {
-                detectedWhiteBallMask.at<uchar>(i, j) = 255;
-                frame.at<cv::Vec3b>(i, j) = cv::Vec3b(255, 255, 255);
-            } else {
-                detectedWhiteBallMask.at<uchar>(i, j) = 0;
-            }
-            if (redCount > redThreshold) {
-                detectedColoredBallMask.at<uchar>(i, j) = 255;
-                frame.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 0);
-            } else {
-                detectedColoredBallMask.at<uchar>(i, j) = 0;
+            // Draw the white ball in the frame
+            cv::circle(frame, cv::Point(cvRound(detectedBallsTemp[whiteIndex][0]), cvRound(detectedBallsTemp[whiteIndex][1])), cvRound(detectedBallsTemp[whiteIndex][2]), cv::Scalar(0, 0, 255), 2);
+
+            // Display the frame
+            cv::namedWindow("Detected white ball", cv::WINDOW_AUTOSIZE);
+            cv::imshow("Detected white ball", frame);
+
+            this->whiteBall = detectedBallsTemp[whiteIndex];
+        }
+
+void BallDetector::detectSolidBalls(cv::Mat frame) {
+    cv::Mat hsvFrame;
+    cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
+
+    cv::Mat coloredBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
+
+    cv::Vec3f redBallColor = cv::Vec3f(colorToHueMap.at(RED), 0, 0);
+
+    for( int i = 0; i < this->detectedBalls.size(); i++ ) {
+        // Loop thorugh a 30x30 square around the ball center
+        int x = cvRound(this->detectedBalls[i][0]);
+        int y = cvRound(this->detectedBalls[i][1]);
+        int redBallCount = 0;
+        int whiteCount = 0;
+        for(int j = x - 15; j < x + 15; j++) {
+            for(int k = y - 15; k < y + 15; k++) {
+                cv::Vec3b pixel = hsvFrame.at<cv::Vec3b>(k, j);
+                if(this->isInRange(pixel, redBallColor, 20, 0)) {
+                    coloredBallMask.at<uchar>(k, j) = 255;
+                    redBallCount++;
+                }
             }
         }
+        if(redBallCount > 50) {
+            cv::circle(frame, cv::Point(cvRound(this->detectedBalls[i][0]), cvRound(this->detectedBalls[i][1])), cvRound(this->detectedBalls[i][2]), cv::Scalar(0, 0, 255), 2);
+        }
     }
-    // Add some morphological operations to remove noise?
 
+    cv::namedWindow("Red ball mask", cv::WINDOW_AUTOSIZE);
+    cv::imshow("Red ball mask", frame);
 
-    cv::namedWindow("Frame", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Frame", frame);
 }

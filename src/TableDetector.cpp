@@ -5,31 +5,69 @@ void TableDetector::setTableLines(cv::Mat frame) {
     cv::Mat hsv, mask;
     cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
 
-    // Choose refrence color from a neighbourhood in the middle of the image
-    cv::Vec3b refColor = hsv.at<cv::Vec3b>(frame.rows/2, frame.cols/2);
-    int hueTolerance = 40;
-    int saturationTolerance = 100;
-    int valueTolerance = 100;
+    mask = removeTableColor(hsv);
 
-    cv::inRange(hsv, cv::Scalar(refColor[0] - hueTolerance, refColor[1] - saturationTolerance, refColor[2] - valueTolerance), cv::Scalar(refColor[0] + hueTolerance, refColor[1] + saturationTolerance, refColor[2] + valueTolerance), mask);
-
-    // Apply GaussianBlur to reduce noise
     cv::Mat blur;
     cv::GaussianBlur(mask, blur, cv::Size(5, 5), 0);
 
-    // Morphological operations
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
     cv::morphologyEx(blur, blur, cv::MORPH_CLOSE, kernel);
 
-    // Apply Canny edge detection
     cv::Mat edges;
     cv::Canny(blur, edges, 75, 150);
 
-    // Find lines using Hough Transform
     std::vector<cv::Vec2f> lines;
     cv::HoughLines(edges, lines, 1, CV_PI/180, 100);
 
-    // Choose one line from each bundle of parallel and close lines
+    std::vector<cv::Vec2f> uniqueLines = chooseFourLines(lines);
+
+    this->detectedLines = uniqueLines;
+}
+
+void TableDetector::setRoiTable(cv::Mat frame) {
+    this->setTableLines(frame);
+
+    std::vector<cv::Point> intersections = this->findIntersections(frame);
+
+    cv::Point centroid = computeCentroid(intersections);
+
+    std::vector<cv::Point> orderedIntersections = refineIntersections(intersections, centroid);
+ 
+    // Make a mask of the table region
+    cv::Mat mask = cv::Mat::zeros(frame.size(), CV_8UC1);
+    cv::fillConvexPoly(mask, orderedIntersections, cv::Scalar(255));
+
+    // Apply the mask to the frame
+    cv::Mat roiTable;
+    frame.copyTo(roiTable, mask);
+
+    this->roiTable = roiTable;
+}
+
+cv::Mat TableDetector::detectTable(cv::Mat frame) {
+    this->setRoiTable(frame);
+    return this->roiTable;
+}
+
+cv::Mat TableDetector::removeTableColor(cv::Mat hsvFrame) {
+
+    // Choose refrence color from a neighbourhood in the middle of the image
+    cv::Vec3b refColor = hsvFrame.at<cv::Vec3b>(hsvFrame.rows/2, hsvFrame.cols/2);
+    int hueTolerance = 40;
+    int saturationTolerance = 100;
+    int valueTolerance = 100;
+    cv::Mat mask;
+    cv::inRange(hsvFrame, 
+                cv::Scalar(refColor[0] - hueTolerance,
+                refColor[1] - saturationTolerance,
+                refColor[2] - valueTolerance),
+                cv::Scalar(refColor[0] + hueTolerance,
+                refColor[1] + saturationTolerance, refColor[2] + valueTolerance),
+                 mask);
+    return mask;
+};
+
+std::vector<cv::Vec2f> TableDetector::chooseFourLines(std::vector<cv::Vec2f> lines) {
     std::vector<cv::Vec2f> uniqueLines;
     for(size_t i = 0; i < lines.size(); i++) {
         float rho = lines[i][0], theta = lines[i][1];
@@ -45,11 +83,13 @@ void TableDetector::setTableLines(cv::Mat frame) {
             uniqueLines.push_back(cv::Vec2f(rho, theta));
         }
     }
-    
+    return uniqueLines;
+}
 
-    // Draw lines on the frame
-    for(size_t i = 0; i < uniqueLines.size(); i++) {
-        float rho = uniqueLines[i][0], theta = uniqueLines[i][1];
+void TableDetector::drawDetectedLines(cv::Mat frame) {
+        // Draw lines on the frame
+    for(size_t i = 0; i < this->detectedLines.size(); i++) {
+        float rho = this->detectedLines[i][0], theta = this->detectedLines[i][1];
         cv::Point pt1, pt2;
         double a = cos(theta), b = sin(theta);
         double x0 = a * rho, y0 = b * rho;
@@ -60,11 +100,9 @@ void TableDetector::setTableLines(cv::Mat frame) {
         cv::line(frame, pt1, pt2, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
         std::cout << "Line " << i << ": rho = " << rho << ", theta = " << theta << std::endl;
     }
-
-    this->detectedLines = uniqueLines;
 }
 
-void TableDetector::setRoiTable(cv::Mat frame) {
+std::vector<cv::Point> TableDetector::findIntersections(cv::Mat frame) {
     // Find the intersections of the detected lines
     std::vector<cv::Point> intersections;
     for(size_t i = 0; i < this->detectedLines.size(); i++) {
@@ -84,18 +122,22 @@ void TableDetector::setRoiTable(cv::Mat frame) {
             }
         }
     }
+    return intersections;
+}
 
-    // Compute centroid of the intersections
+cv::Point TableDetector::computeCentroid(std::vector<cv::Point> intersections) {
     cv::Point centroid;
     for(size_t i = 0; i < intersections.size(); i++) {
         centroid.x += intersections[i].x;
         centroid.y += intersections[i].y;
-        std::cout << "Intersection " << i << ": x = " << intersections[i].x << ", y = " << intersections[i].y << std::endl;
     }
     centroid.x /= intersections.size();
     centroid.y /= intersections.size();
+    return centroid;
+}
 
-    // Compute angle between centroin and each intersection
+std::vector<cv::Point> TableDetector::refineIntersections(std::vector<cv::Point> intersections, cv::Point centroid) {
+   // Compute angle between centroin and each intersection
     std::vector<double> angles;
     for(size_t i = 0; i < intersections.size(); i++) {
         double angle = atan2(intersections[i].y - centroid.y, intersections[i].x - centroid.x);
@@ -119,13 +161,19 @@ void TableDetector::setRoiTable(cv::Mat frame) {
         angles[minIndex] = CV_PI;
     }
 
-    // Make a mask of the table region
-    cv::Mat mask = cv::Mat::zeros(frame.size(), CV_8UC1);
-    cv::fillConvexPoly(mask, orderedIntersections, cv::Scalar(255));
-
-    // Apply the mask to the frame
-    cv::Mat roiTable;
-    frame.copyTo(roiTable, mask);
-
-    this->roiTable = roiTable;
+    // move orderedIntersections[i] closer to centroid
+    for (int i = 0; i < orderedIntersections.size(); i++) {
+        cv::Point direction = orderedIntersections[i] - centroid;
+        if(direction.x > 0) {
+            orderedIntersections[i].x -= 15;
+        } else {
+            orderedIntersections[i].x += 15;
+        }
+        if(direction.y > 0) {
+            orderedIntersections[i].y -= 15;
+        } else {
+            orderedIntersections[i].y += 15;
+        }
+    }
+    return orderedIntersections;
 }
