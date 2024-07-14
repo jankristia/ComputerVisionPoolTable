@@ -25,9 +25,6 @@ void TableDetector::setTableLines(cv::Mat frame) {
     cv::Mat edges;
     cv::Canny(blur, edges, 75, 150);
 
-    cv::imshow("Edges", edges);
-    
-
     // Find lines using Hough Transform
     std::vector<cv::Vec2f> lines;
     cv::HoughLines(edges, lines, 1, CV_PI/180, 100);
@@ -63,11 +60,6 @@ void TableDetector::setTableLines(cv::Mat frame) {
         cv::line(frame, pt1, pt2, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
         std::cout << "Line " << i << ": rho = " << rho << ", theta = " << theta << std::endl;
     }
-
-    // Display the frame
-    cv::imshow("Detected Table", frame);
-
-    cv::waitKey(0);
 
     this->detectedLines = uniqueLines;
 }
@@ -136,11 +128,4 @@ void TableDetector::setRoiTable(cv::Mat frame) {
     frame.copyTo(roiTable, mask);
 
     this->roiTable = roiTable;
-
-    // Display the ROI table
-
-    cv::imshow("ROI Table", roiTable);
-
-    cv::waitKey(0);
-
 }

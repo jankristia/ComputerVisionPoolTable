@@ -1,3 +1,6 @@
+#ifndef TABLEDETECTOR_HPP
+#define TABLEDETECTOR_HPP
+
 #include <opencv2/opencv.hpp>
 
 class TableDetector {
@@ -10,3 +13,5 @@ class TableDetector {
         void setTableLines(cv::Mat frame);
         void setRoiTable(cv::Mat frame);
 };
+
+#endif
