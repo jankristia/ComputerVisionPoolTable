@@ -35,27 +35,12 @@ int main(int argc, char** argv) {
     TableDetector tableDetector;
     cv::Mat detectedTable = tableDetector.detectTable(frame);
 
-    // Show the detected table
-    cv::namedWindow("Detected table", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Detected table", detectedTable);
-
     BallDetector ballDetector;
-    ballDetector.detectBalls(tableDetector.roiTable);
-    ballDetector.detectBlackBall(tableDetector.roiTable);
+    ballDetector.segmentBalls(tableDetector.roiTable);
 
-    // Draw the bounding boxes on the detected table
-    cv::Mat detectedBalls = tableDetector.roiTable.clone();
-    for(int i = 0; i < ballDetector.boundingBoxes.size(); i++) {
-        cv::rectangle(detectedBalls, ballDetector.boundingBoxes[i], cv::Scalar(0, 255, 0), 2);
-    }
-
-    // Show the detected balls
-    cv::namedWindow("Detected balls", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Detected balls", detectedBalls);
-
-    MeanAveragePrecision map;
-    double averagePrecision = map.averagePrecisionCalculation(frame, groundTruthPath);
-    std::cout << "Average Precision: " << averagePrecision << std::endl;
+    // MeanAveragePrecision map;
+    // double averagePrecision = map.averagePrecisionCalculation(frame, groundTruthPath);
+    // std::cout << "Average Precision: " << averagePrecision << std::endl;
    
     cv::waitKey(0);
 
