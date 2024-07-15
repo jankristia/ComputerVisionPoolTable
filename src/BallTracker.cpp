@@ -1,7 +1,7 @@
 // Main author: Jan Kristian Alstergren
 #include "BallTracker.hpp"
 
-std::vector<cv::Rect> BallTracker::expandBoundingBoxes(std::vector<cv::Rect> inputBoxes) {
+std::vector<cv::Rect> BallTracker::expandBoundingBoxes(std::vector<BoundingBox> inputBoxes) {
     std::vector<cv::Rect> expandedBoundingBoxes;
     for(const auto& box : inputBoxes) {
         cv::Rect expandedBox = cv::Rect(box.x - 12, box.y - 12, box.width + 24, box.height + 24);
@@ -27,12 +27,12 @@ void BallTracker::trackBalls(cv::VideoCapture video) {
 
     // Detect the balls and make bounding boxes
     BallDetector ballDetector;
-    ballDetector.detectBalls(tableFrame);
+    ballDetector.segmentBalls(tableFrame);
     
     cv::Mat gaussianFrame;
     cv::GaussianBlur(tableFrame, gaussianFrame, cv::Size(11, 11), 2, 2);
 
-    std::vector<cv::Rect> expandedBoundingBoxes = this->expandBoundingBoxes(ballDetector.boundingBoxes);
+    std::vector<cv::Rect> expandedBoundingBoxes = this->expandBoundingBoxes(ballDetector.segmentedBalls);
     cv::Ptr<cv::MultiTracker> multiTracker = cv::MultiTracker::create();
 
 

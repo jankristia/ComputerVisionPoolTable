@@ -15,7 +15,7 @@ class BallTracker {
     public:
     std::vector<cv::Rect> boundingBoxes;
 
-    std::vector<cv::Rect> expandBoundingBoxes(std::vector<cv::Rect> inputBoxes);
+    std::vector<cv::Rect> expandBoundingBoxes(std::vector<BoundingBox> inputBoxes);
 
     void trackBalls(cv::VideoCapture video);
    

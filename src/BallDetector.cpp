@@ -102,22 +102,10 @@ void BallDetector::detectBalls(cv::Mat frame) {
         }
     }
 
-
     this->detectedBalls = circles;
-    this->setBoundingBoxes();
 }
 
-void BallDetector::setBoundingBoxes() {
-    for(int i = 0; i < this->detectedBalls.size(); i++) {
-        cv::Rect2d boundingBox = cv::Rect2d(cvRound(this->detectedBalls[i][0] - this->detectedBalls[i][2]), 
-                                            cvRound(this->detectedBalls[i][1] - this->detectedBalls[i][2]),
-                                            cvRound(2*this->detectedBalls[i][2]), 
-                                            cvRound(2*this->detectedBalls[i][2]));
-        this->boundingBoxes.push_back(boundingBox);
-    }
-}
-
-void BallDetector::detectWhiteBall(cv::Mat frame) {
+int BallDetector::detectWhiteBallIndex(cv::Mat frame) {
 
     cv::Mat hsvFrame;
     cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
@@ -155,16 +143,10 @@ void BallDetector::detectWhiteBall(cv::Mat frame) {
             whiteIndex = i;
         }
     }
-
-    // Draw the white ball
-    cv::circle(frame, cv::Point(cvRound(detectedBallsTemp[whiteIndex][0]), cvRound(detectedBallsTemp[whiteIndex][1])), cvRound(detectedBallsTemp[whiteIndex][2]), cv::Scalar(255, 255, 255), 2);
-
-    // Display the frame
-    cv::namedWindow("White ball", cv::WINDOW_AUTOSIZE);
-    cv::imshow("White ball", frame);
+    return whiteIndex;
 }
 
-void BallDetector::detectBlackBall(cv::Mat frame) {
+int BallDetector::detectBlackBallIndex(cv::Mat frame) {
     cv::Mat hsvFrame;
     cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
 
@@ -201,73 +183,90 @@ void BallDetector::detectBlackBall(cv::Mat frame) {
             blackIndex = i;
         }
     }
-
-    // Draw the black ball
-    cv::circle(frame, cv::Point(cvRound(detectedBallsTemp[blackIndex][0]), cvRound(detectedBallsTemp[blackIndex][1])), cvRound(detectedBallsTemp[blackIndex][2]), cv::Scalar(0, 0, 0), 2);
-
-    // Display the frame
-    cv::namedWindow("Black ball", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Black ball", frame);
+    return blackIndex;
 }
 
+void BallDetector::segmentBalls(cv::Mat frame) {
+    this->detectBalls(frame);
+    int whiteIndex = this->detectWhiteBallIndex(frame);
+    int blackIndex = this->detectBlackBallIndex(frame);
 
+    std::vector<cv::Vec3f> detectedBallsTemp = this->detectedBalls;
 
+    // Add the white ball to segmentedBalls with ballType = 1
+    BoundingBox whiteBox = {cvRound(detectedBallsTemp[whiteIndex][0] - detectedBallsTemp[whiteIndex][2]), 
+                            cvRound(detectedBallsTemp[whiteIndex][1] - detectedBallsTemp[whiteIndex][2]), 
+                            cvRound(detectedBallsTemp[whiteIndex][2]*2), 
+                            cvRound(detectedBallsTemp[whiteIndex][2]*2), 1};
+    this->segmentedBalls.push_back(whiteBox);
+    BoundingBox blackBox = {cvRound(detectedBallsTemp[blackIndex][0] - detectedBallsTemp[blackIndex][2]), 
+                            cvRound(detectedBallsTemp[blackIndex][1] - detectedBallsTemp[blackIndex][2]), 
+                            cvRound(detectedBallsTemp[blackIndex][2]*2), 
+                            cvRound(detectedBallsTemp[blackIndex][2]*2), 2};
+    // Add the black ball to segmentedBalls with ballType = 2
+    this->segmentedBalls.push_back(blackBox);
+    
+    // Delete the white from detectedBallsTemp
+    detectedBallsTemp.erase(detectedBallsTemp.begin() + whiteIndex);
+    if(whiteIndex < blackIndex) {
+        blackIndex--;
+    }
+    detectedBallsTemp.erase(detectedBallsTemp.begin() + blackIndex);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void BallDetector::detectSolidBalls(cv::Mat frame) {
     cv::Mat hsvFrame;
     cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
-
-    cv::Mat coloredBallMask = cv::Mat::zeros(frame.size(), CV_8UC1);
-
-    cv::Vec3f redBallColor = cv::Vec3f(colorToHueMap.at(RED), 0, 0);
-
-    for( int i = 0; i < this->detectedBalls.size(); i++ ) {
-        // Loop thorugh a 30x30 square around the ball center
-        int x = cvRound(this->detectedBalls[i][0]);
-        int y = cvRound(this->detectedBalls[i][1]);
-        int redBallCount = 0;
+    // Loop through the rest of the balls, if there are a thershold amount of white pixels in the radius ball,
+    // add it to segmentedBalls with ballType = 4
+    // If there are less than threshold amount of white pixels, add it to segmentedBalls with ballType = 3
+    for(int i = 0; i < detectedBallsTemp.size(); i++) {
+        int x = cvRound(detectedBallsTemp[i][0]);
+        int y = cvRound(detectedBallsTemp[i][1]);
+        int radius = cvRound(detectedBallsTemp[i][2]);
         int whiteCount = 0;
-        for(int j = x - 15; j < x + 15; j++) {
-            for(int k = y - 15; k < y + 15; k++) {
+        int whiteThreshold = 20;
+        for(int j = x - radius; j < x + radius; j++) {
+            for(int k = y - radius; k < y + radius; k++) {
                 cv::Vec3b pixel = hsvFrame.at<cv::Vec3b>(k, j);
-                if(this->isInRange(pixel, redBallColor, 20, 0)) {
-                    coloredBallMask.at<uchar>(k, j) = 255;
-                    redBallCount++;
+                if(pixel[0] >= 20 && pixel[0] <= 49 && 
+                    pixel[1] >= 20 && pixel[1] <= 110 && 
+                    pixel[2] >= 200 && pixel[2] <= 255) {
+                    whiteCount++;
                 }
             }
         }
-        if(redBallCount > 50) {
-            cv::circle(frame, cv::Point(cvRound(this->detectedBalls[i][0]), cvRound(this->detectedBalls[i][1])), cvRound(this->detectedBalls[i][2]), cv::Scalar(0, 0, 255), 2);
+        std::cout << "White count: " << whiteCount << std::endl;
+        if(whiteCount > whiteThreshold) {
+            this->segmentedBalls.push_back(BoundingBox(cvRound(detectedBallsTemp[i][0] - detectedBallsTemp[i][2]), 
+                                            cvRound(detectedBallsTemp[i][1] - detectedBallsTemp[i][2]), 
+                                            cvRound(detectedBallsTemp[i][2]*2), 
+                                            cvRound(detectedBallsTemp[i][2]*2), 4));
+        } else {
+            this->segmentedBalls.push_back(BoundingBox(cvRound(detectedBallsTemp[i][0] - detectedBallsTemp[i][2]), 
+                                            cvRound(detectedBallsTemp[i][1] - detectedBallsTemp[i][2]), 
+                                            cvRound(detectedBallsTemp[i][2]*2), 
+                                            cvRound(detectedBallsTemp[i][2]*2), 3));
         }
     }
+    // Finally display the bounding boxes in the frame
+    // with different colors depending on the ballType
+    for(int i = 0; i < this->segmentedBalls.size(); i++) {
+        cv::Scalar color;
+        if(this->segmentedBalls[i].ballType == 1) {
+            color = cv::Scalar(255, 255, 255);
+        } else if(this->segmentedBalls[i].ballType == 2) {
+            color = cv::Scalar(0, 0, 0);
+        } else if(this->segmentedBalls[i].ballType == 3) {
+            color = cv::Scalar(0, 0, 255);
+        } else if(this->segmentedBalls[i].ballType == 4) {
+            color = cv::Scalar(255, 0, 0);
+        }
+        // Draw the bounding boxes on the frame
+        cv::rectangle(frame, cv::Rect(this->segmentedBalls[i].x,
+                                        this->segmentedBalls[i].y,
+                                        this->segmentedBalls[i].width,
+                                        this->segmentedBalls[i].height), 
+                                        color, 2);
+    }
 
-    cv::namedWindow("Red ball mask", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Red ball mask", frame);
-
+    cv::imshow("Segmented Balls", frame);
 }
