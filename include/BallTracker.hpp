@@ -1,3 +1,4 @@
+// Main author: Jan Kristian Alstergren
 #ifndef BALLTRACKER_HPP
 #define BALLTRACKER_HPP
 
@@ -7,6 +8,10 @@
 #include "BallDetector.hpp"
 
 class BallTracker {
+    // // To track balls, run the following code in main.cpp:
+    // // All the ball table and ball detection is done within the class
+    // BallTracker ballTracker;
+    // ballTracker.trackBalls(video);
     public:
     std::vector<cv::Rect> boundingBoxes;
 

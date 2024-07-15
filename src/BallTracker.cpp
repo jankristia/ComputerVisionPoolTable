@@ -1,3 +1,4 @@
+// Main author: Jan Kristian Alstergren
 #include "BallTracker.hpp"
 
 std::vector<cv::Rect> BallTracker::expandBoundingBoxes(std::vector<cv::Rect> inputBoxes) {
@@ -22,15 +23,11 @@ void BallTracker::trackBalls(cv::VideoCapture video) {
     // Detect the pool table
     cv::Mat tableFrame;
     TableDetector tableDetector;
-    tableDetector.setTableLines(frame);
-    tableDetector.setRoiTable(frame);
-    tableFrame = tableDetector.getRoiTable();
-    tableDetector.drawDetectedLines(tableFrame);
+    tableFrame = tableDetector.detectTable(frame);
 
     // Detect the balls and make bounding boxes
     BallDetector ballDetector;
-    ballDetector.detectBalls(tableDetector.roiTable);
-    ballDetector.setBoundingBoxes();
+    ballDetector.detectBalls(tableFrame);
     
     cv::Mat gaussianFrame;
     cv::GaussianBlur(tableFrame, gaussianFrame, cv::Size(11, 11), 2, 2);
@@ -49,8 +46,7 @@ void BallTracker::trackBalls(cv::VideoCapture video) {
     }
     int i = 0;
     while(video.read(frame)) {
-        tableDetector.setRoiTable(frame);
-        tableFrame = tableDetector.getRoiTable();
+        tableFrame = tableDetector.detectTable(frame);
         cv::GaussianBlur(tableFrame, gaussianFrame, cv::Size(11, 11), 2, 2);
 
         multiTracker->update(gaussianFrame);
