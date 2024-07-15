@@ -9,6 +9,9 @@ class TableDetector {
         // make vector of circles
         std::vector<cv::Vec3f> detectedBalls;
         cv::Mat roiTable;
+
+        // Run this to do whole table detection, will both set and return the roiTable
+        cv::Mat detectTable(cv::Mat frame);
         
         void setTableLines(cv::Mat frame);
         void setRoiTable(cv::Mat frame);
@@ -21,8 +24,6 @@ class TableDetector {
         std::vector<cv::Point> findIntersections(cv::Mat frame);
         cv::Point computeCentroid(std::vector<cv::Point> intersections);
         std::vector<cv::Point> refineIntersections(std::vector<cv::Point> intersections, cv::Point centroid);
-
-        cv::Mat detectTable(cv::Mat frame);
 };
 
 #endif

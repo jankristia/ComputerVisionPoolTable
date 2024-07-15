@@ -35,22 +35,22 @@ double MeanAveragePrecision::calculateIoU(const BoundingBox& box1, const Boundin
     return static_cast<double>(intersection) / static_cast<double>(unionArea);
 }
 
-std::vector<bool> MeanAveragePrecision::evaluateDetections(std::vector<BoundingBox> groundTruth, std::vector<BoundingBox> detectedBoxes, double threshold) {
-    std::vector<bool> detections;
-    for(const auto& detectedBox : detectedBoxes) {
-        bool detected = false;
-        for(const auto& gtBox : groundTruth) {
-            double iou = this->calculateIoU(detectedBox, gtBox);
-            if(iou > threshold) {
-                detected = true;
+std::vector<bool> MeanAveragePrecision::evaluateDetections(const std::vector<BoundingBox>& groundTruth, const std::vector<BoundingBox>& detectedBoxes, double threshold) {
+    std::vector<bool> detections(detectedBoxes.size(), false);
+    std::vector<bool> matched(groundTruth.size(), false);
+
+    for (size_t i = 0; i < detectedBoxes.size(); ++i) {
+        for (size_t j = 0; j < groundTruth.size(); ++j) {
+            if (!matched[j] && calculateIoU(detectedBoxes[i], groundTruth[j]) > threshold) {
+                detections[i] = true;
+                matched[j] = true;
                 break;
             }
         }
-        detections.push_back(detected);
     }
+
     return detections;
 }
-
 void MeanAveragePrecision::calculatePrecisionRecall() {
     int truePositives = 0;
     int falsePositives = 0;
@@ -64,20 +64,43 @@ void MeanAveragePrecision::calculatePrecisionRecall() {
     }
     falseNegatives = this->groundTruth.size() - truePositives;
     float precision = static_cast<float>(truePositives) / static_cast<float>(truePositives + falsePositives);
-    float recall = static_cast<float>(truePositives) / static_cast<float>(truePositives + falseNegatives);
+    float recall = static_cast<float>(truePositives) / static_cast<float>(this->groundTruth.size());
     this->precisions.push_back(precision);
     this->recalls.push_back(recall);
 }
 
-double MeanAveragePrecision::calculateMeanAveragePrecision() {
-    double sum = 0;
-    for(size_t i = 0; i < this->precisions.size(); i++) {
-        sum += this->precisions[i];
+// double MeanAveragePrecision::calculatAveragePrecision() {
+//     double sum = 0;
+//     for(size_t i = 0; i < this->precisions.size(); i++) {
+//         sum += this->precisions[i];
+//     }
+//     return sum / this->precisions.size();
+// }
+double MeanAveragePrecision::calculateAveragePrecision() {
+    // Sort by recall
+    std::vector<std::pair<float, float>> prPairs;
+    for (size_t i = 0; i < this->precisions.size(); i++) {
+        prPairs.push_back(std::make_pair(this->recalls[i], this->precisions[i]));
     }
-    return sum / this->precisions.size();
+    std::sort(prPairs.begin(), prPairs.end());
+
+    // Interpolate precision at each recall level
+    double sumPrecision = 0.0;
+    int recallLevels[11] = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100}; // Recall levels from 0 to 1 with 0.1 steps
+    for (int recallLevel : recallLevels) {
+        float recall = recallLevel / 100.0;
+        float maxPrecision = 0.0;
+        for (const auto& prPair : prPairs) {
+            if (prPair.first >= recall) {
+                maxPrecision = std::max(maxPrecision, prPair.second);
+            }
+        }
+        sumPrecision += maxPrecision;
+    }
+    return sumPrecision / 11.0; // Mean of the 11 interpolated precision values
 }
 
-double MeanAveragePrecision::meanAveragePrecisionCalculation(cv::Mat frame, std::string groundTruthPath) {
+double MeanAveragePrecision::averagePrecisionCalculation(cv::Mat frame, std::string groundTruthPath) {
     cv::Mat tableFrame;
     TableDetector tableDetector;
     tableFrame = tableDetector.detectTable(frame);
@@ -92,6 +115,6 @@ double MeanAveragePrecision::meanAveragePrecisionCalculation(cv::Mat frame, std:
     map.loadGroundTruth(groundTruthPath);
     map.setDetectedBoxes(ballDetector.boundingBoxes);
     map.calculatePrecisionRecall();
-    double meanAveragePrecision = map.calculateMeanAveragePrecision();
+    double meanAveragePrecision = map.calculateAveragePrecision();
     return meanAveragePrecision;
 }

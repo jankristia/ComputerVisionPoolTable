@@ -18,11 +18,11 @@ class BallDetector {
         std::map<Color, int> colorToHueMap;
         std::vector<cv::Rect> boundingBoxes; 
         
-
+        // Run this with detected table frame as input to do whole ball detection
+        void detectBalls(cv::Mat frame);
 
         void setTableColor(cv::Mat frame);
         bool isInRange(cv::Vec3f testColor, cv::Vec3f refrenceColor, int threshold, int indexToCheck = 0);
-        void detectBalls(cv::Mat frame);
         void setBoundingBoxes();
 
 

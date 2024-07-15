@@ -12,7 +12,7 @@ BallDetector::BallDetector(): colorToHueMap({
         {MAROON, 9},
         {WHITE, 35},
         {BLACK, 90}
-    }) {}
+    }) { }
 
 void BallDetector::setTableColor(cv::Mat frame) {
     cv::Mat hsvFrame;
@@ -36,28 +36,47 @@ bool BallDetector::isInRange(cv::Vec3f testColor, cv::Vec3f refrenceColor, int t
 
 
 void BallDetector::detectBalls(cv::Mat frame) {
-    this->setTableColor(frame);
-    // loop through the frame and sett all pixels with table color to black
-    cv::Mat hsvFrame;
-    cv:: Mat tempFrame = frame;
-    cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
-    for (int i = 0; i < frame.rows; i++) {
-        for (int j = 0; j < frame.cols; j++) {
-            cv::Vec3b pixel = hsvFrame.at<cv::Vec3b>(i, j);
-            if (isInRange(pixel, tableColor, 2)) {
-                tempFrame.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 0);
-            }
-        }
-    }
+    // this->setTableColor(frame);
+    // // loop through the frame and sett all pixels with table color to white
+    // cv::Mat hsvFrame;
+    // cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
+
+    // // Assuming you have the hue, saturation, and value range for the table color
+    // int lowH = this->tableColor[0] - 3;
+    // int highH = this->tableColor[0] + 3;
+    // int lowS = 0;        // this->tableColor[1] - 50;
+    // int highS = 255;     // this->tableColor[1] + 50;
+    // int lowV = 0;        // this->tableColor[2] - 50;
+    // int highV = 255;     // this->tableColor[2] + 50;
+    // cv::Mat mask;
+    // cv::inRange(hsvFrame, cv::Scalar(lowH, lowS, lowV), cv::Scalar(highH, highS, highV), mask);
+    // cv::bitwise_not(mask, mask);  // Invert mask to keep everything except the table color
+
+    // cv::Mat noTableColor;
+    // cv::bitwise_and(frame, frame, noTableColor, mask);
 
     cv::Mat grayFrame;
-    cv::cvtColor(tempFrame, grayFrame, cv::COLOR_BGR2GRAY);
-    cv::GaussianBlur(grayFrame, grayFrame, cv::Size(7, 7), 2, 2);
+    cv::cvtColor(frame, grayFrame, cv::COLOR_BGR2GRAY);
+
+    cv::Mat blurred;
+    cv::GaussianBlur(grayFrame, blurred, cv::Size(7, 7), 2, 2);
+
+    cv::Mat equalized;
+    cv::equalizeHist(blurred, equalized);
+
+    cv::Mat edges;
+    cv::Canny(equalized, edges, 100, 200);
+
+    // Show edges image
+    cv::imshow("Canny Edges", edges);
 
     std::vector<cv::Vec3f> circles;
-    cv::HoughCircles(grayFrame, circles, cv::HOUGH_GRADIENT, 1, 16, 1, 11, 7, 13);
+    cv::HoughCircles(blurred, circles, cv::HOUGH_GRADIENT, 1, 20, 1, 11, 7, 13);
+
+    // Only keep circles that have colors in a range of the colorToHueMap
 
     this->detectedBalls = circles;
+    this->setBoundingBoxes();
 }
 
 void BallDetector::setBoundingBoxes() {
