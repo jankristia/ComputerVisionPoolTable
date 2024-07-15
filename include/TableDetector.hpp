@@ -1,16 +1,21 @@
+// Main author: Jan Kristian Alstergren
 #ifndef TABLEDETECTOR_HPP
 #define TABLEDETECTOR_HPP
 
 #include <opencv2/opencv.hpp>
+#include "BoundingBox.hpp"
 
 class TableDetector {
+    // // To detect table, run the following code in main.cpp:
+    // TableDetector tableDetector;
+    // cv::Mat detectedTable = tableDetector.detectTable(frame);
     public:
         std::vector<cv::Vec2f> detectedLines;
         // make vector of circles
         std::vector<cv::Vec3f> detectedBalls;
+        std::vector<BoundingBox> boundingBoxes;
         cv::Mat roiTable;
 
-        // Run this to do whole table detection, will both set and return the roiTable
         cv::Mat detectTable(cv::Mat frame);
         
         void setTableLines(cv::Mat frame);

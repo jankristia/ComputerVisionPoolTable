@@ -1,3 +1,4 @@
+// Main author: Jan Kristian Alstergren
 #include "TableDetector.hpp"
 
 void TableDetector::setTableLines(cv::Mat frame) {
@@ -165,14 +166,14 @@ std::vector<cv::Point> TableDetector::refineIntersections(std::vector<cv::Point>
     for (int i = 0; i < orderedIntersections.size(); i++) {
         cv::Point direction = orderedIntersections[i] - centroid;
         if(direction.x > 0) {
-            orderedIntersections[i].x -= 15;
+            orderedIntersections[i].x -= 10;
         } else {
-            orderedIntersections[i].x += 15;
+            orderedIntersections[i].x += 10;
         }
         if(direction.y > 0) {
-            orderedIntersections[i].y -= 15;
+            orderedIntersections[i].y -= 10;
         } else {
-            orderedIntersections[i].y += 15;
+            orderedIntersections[i].y += 10;
         }
     }
     return orderedIntersections;

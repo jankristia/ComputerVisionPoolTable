@@ -1,3 +1,4 @@
+// Main author: Jan Kristian Alstergren
 #include "MeanAveragePrecision.hpp"
 
 void MeanAveragePrecision::loadGroundTruth(const std::string& filepath) {
@@ -69,13 +70,6 @@ void MeanAveragePrecision::calculatePrecisionRecall() {
     this->recalls.push_back(recall);
 }
 
-// double MeanAveragePrecision::calculatAveragePrecision() {
-//     double sum = 0;
-//     for(size_t i = 0; i < this->precisions.size(); i++) {
-//         sum += this->precisions[i];
-//     }
-//     return sum / this->precisions.size();
-// }
 double MeanAveragePrecision::calculateAveragePrecision() {
     // Sort by recall
     std::vector<std::pair<float, float>> prPairs;

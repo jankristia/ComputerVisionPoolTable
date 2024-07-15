@@ -1,3 +1,4 @@
+// Main author: Jan Kristian Alstergren
 #ifndef BALLDETECTOR_HPP
 #define BALLDETECTOR_HPP
 
@@ -6,6 +7,11 @@
 #include "ColorEnum.hpp"
 
 class BallDetector {
+    // // To detect balls, run the following code in main.cpp:
+    // // tableDetector.roiTable is the detected table in the TableDetector class
+    // BallDetector ballDetector;
+    // ballDetector.detectBalls(tableDetector.roiTable); 
+
     public:
         BallDetector();
         std::vector<cv::Vec3f> detectedBalls;
@@ -18,7 +24,6 @@ class BallDetector {
         std::map<Color, int> colorToHueMap;
         std::vector<cv::Rect> boundingBoxes; 
         
-        // Run this with detected table frame as input to do whole ball detection
         void detectBalls(cv::Mat frame);
 
         void setTableColor(cv::Mat frame);

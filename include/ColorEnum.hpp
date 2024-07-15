@@ -1,3 +1,4 @@
+// Main author: Jan Kristian Alstergren
 #ifndef COLORMAP_HPP
 #define COLORMAP_HPP
 

@@ -1,3 +1,4 @@
+// Main author: Jan Kristian Alstergren
 #ifndef MEANAVERAGEPRECISION_HPP
 #define MEANAVERAGEPRECISION_HPP
 
@@ -9,17 +10,16 @@
 
 #include "BallDetector.hpp"
 #include "TableDetector.hpp"
-
-struct BoundingBox {
-    int x;
-    int y;
-    int width;
-    int height;
-    int ballType; // 0 = background 1 = white ball, 2 = black, 3 = solid, 4 = striped, 5 = playing field
-};
-
+#include "BoundingBox.hpp"
 
 class MeanAveragePrecision {
+    // // To calculate the mean average precision, run the following code in main.cpp:
+    // // frame is the current frame from the video
+    // // groundTruthPath is the path to the ground truth bounding boxes
+    // // All the ball table and ball detection is done within the class
+    // MeanAveragePrecision map;
+    // double averagePrecision = map.averagePrecisionCalculation(frame, groundTruthPath);
+    // std::cout << "Average Precision: " << averagePrecision << std::endl;
     public:
     std::vector<BoundingBox> groundTruth;
     std::vector<BoundingBox> detectedBoxes;
