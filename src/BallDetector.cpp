@@ -213,6 +213,8 @@ void BallDetector::segmentBalls(cv::Mat frame) {
     }
     detectedBallsTemp.erase(detectedBallsTemp.begin() + blackIndex);
 
+    cv::Mat hsvFrame;
+    cv::cvtColor(frame, hsvFrame, cv::COLOR_BGR2HSV);
     // Loop through the rest of the balls, if there are a thershold amount of white pixels in the radius ball,
     // add it to segmentedBalls with ballType = 4
     // If there are less than threshold amount of white pixels, add it to segmentedBalls with ballType = 3
@@ -221,10 +223,10 @@ void BallDetector::segmentBalls(cv::Mat frame) {
         int y = cvRound(detectedBallsTemp[i][1]);
         int radius = cvRound(detectedBallsTemp[i][2]);
         int whiteCount = 0;
-        int whiteThreshold = 0;
+        int whiteThreshold = 20;
         for(int j = x - radius; j < x + radius; j++) {
             for(int k = y - radius; k < y + radius; k++) {
-                cv::Vec3b pixel = frame.at<cv::Vec3b>(k, j);
+                cv::Vec3b pixel = hsvFrame.at<cv::Vec3b>(k, j);
                 if(pixel[0] >= 20 && pixel[0] <= 49 && 
                     pixel[1] >= 20 && pixel[1] <= 110 && 
                     pixel[2] >= 200 && pixel[2] <= 255) {
@@ -232,6 +234,7 @@ void BallDetector::segmentBalls(cv::Mat frame) {
                 }
             }
         }
+        std::cout << "White count: " << whiteCount << std::endl;
         if(whiteCount > whiteThreshold) {
             this->segmentedBalls.push_back(BoundingBox(cvRound(detectedBallsTemp[i][0] - detectedBallsTemp[i][2]), 
                                             cvRound(detectedBallsTemp[i][1] - detectedBallsTemp[i][2]), 

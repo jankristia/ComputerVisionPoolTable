@@ -32,6 +32,17 @@ int main(int argc, char** argv) {
     cv::Mat frame;
     video.read(frame);
 
+        cv::Mat hsvImage;
+    cv::cvtColor(frame, hsvImage, cv::COLOR_BGR2HSV);
+
+    cv::namedWindow("Normal image", cv::WINDOW_AUTOSIZE); 
+	cv::imshow("Normal image", frame);
+
+    cv::namedWindow("Click image", cv::WINDOW_AUTOSIZE); 
+	cv::imshow("Click image", hsvImage);
+
+    cv::setMouseCallback("Click image", printBGR, &hsvImage);
+
     TableDetector tableDetector;
     cv::Mat detectedTable = tableDetector.detectTable(frame);
 
