@@ -32,27 +32,8 @@ int main(int argc, char** argv) {
     cv::Mat frame;
     video.read(frame);
 
-        cv::Mat hsvImage;
-    cv::cvtColor(frame, hsvImage, cv::COLOR_BGR2HSV);
-
-    cv::namedWindow("Normal image", cv::WINDOW_AUTOSIZE); 
-	cv::imshow("Normal image", frame);
-
-    cv::namedWindow("Click image", cv::WINDOW_AUTOSIZE); 
-	cv::imshow("Click image", hsvImage);
-
-    cv::setMouseCallback("Click image", printBGR, &hsvImage);
-
-    TableDetector tableDetector;
-    cv::Mat detectedTable = tableDetector.detectTable(frame);
-
-    BallDetector ballDetector;
-    ballDetector.segmentBalls(tableDetector.roiTable);
-
-    MeanAveragePrecision map;
-    map.setDetectedBoxes(ballDetector.segmentedBalls);
-    double averagePrecision = map.averagePrecisionCalculation(frame, groundTruthPath);
-    std::cout << "Average Precision: " << averagePrecision << std::endl;
+    BallTracker ballTracker;
+    ballTracker.trackBalls(video);
    
     cv::waitKey(0);
 

@@ -1,3 +1,4 @@
+// Main author: Jan Kristian Alstergren
 #ifndef HELPERFUNCTIONS_HPP
 #define HELPERFUNCTIONS_HPP
 
