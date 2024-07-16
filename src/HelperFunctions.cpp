@@ -1,3 +1,4 @@
+// Main author: Jan Kristian Alstergren
 #include "HelperFunctions.hpp"
 
 

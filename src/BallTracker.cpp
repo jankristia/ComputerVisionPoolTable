@@ -52,8 +52,21 @@ void BallTracker::trackBalls(cv::VideoCapture video) {
         multiTracker->update(gaussianFrame);
         std::cout << "Updating frame: " << i << std::endl;
         i++;
+        int j = 0;
         for(const auto& box : multiTracker->getObjects()) {
+            if(ballDetector.segmentedBalls[j].ballType == 1) {
+            cv::rectangle(gaussianFrame, box, cv::Scalar(255, 255, 255), 2, 1);
+            }
+            else if(ballDetector.segmentedBalls[j].ballType == 2) {
+            cv::rectangle(gaussianFrame, box, cv::Scalar(0, 0, 0), 2, 1);
+            }
+            else if(ballDetector.segmentedBalls[j].ballType == 3) {
             cv::rectangle(gaussianFrame, box, cv::Scalar(255, 0, 0), 2, 1);
+            }
+            else if(ballDetector.segmentedBalls[j].ballType == 4) {
+            cv::rectangle(gaussianFrame, box, cv::Scalar(0, 255, 0), 2, 1);
+            }
+            j++;
         }
         cv::imshow("MultiTracker", gaussianFrame);
         videoWriter.write(gaussianFrame);

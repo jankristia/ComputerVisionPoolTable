@@ -27,14 +27,13 @@ class MeanAveragePrecision {
     std::vector<float> recalls;
 
     void loadGroundTruth(const std::string& filepath);
-    void setDetectedBoxes(std::vector<cv::Rect> detectedBoundingBoxes); // Untill we have working segmentation we set ballType to 0
+    void setDetectedBoxes(std::vector<BoundingBox> detectedBoundingBoxes);
     double calculateIoU(const BoundingBox& box1, const BoundingBox& box2);
     std::vector<bool> evaluateDetections(const std::vector<BoundingBox>& groundTruth, const std::vector<BoundingBox>& detectedBoxes, double threshold);
     void calculatePrecisionRecall();
     double calculateAveragePrecision();
 
     double averagePrecisionCalculation(cv::Mat frame, std::string groundTruthPath);
-
 };
 
 #endif
