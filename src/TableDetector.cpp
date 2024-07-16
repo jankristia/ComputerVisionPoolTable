@@ -33,7 +33,7 @@ void TableDetector::setRoiTable(cv::Mat frame) {
     cv::Point centroid = computeCentroid(intersections);
 
     std::vector<cv::Point> orderedIntersections = refineIntersections(intersections, centroid);
- 
+    this->tableCorners = orderedIntersections;
     // Make a mask of the table region
     cv::Mat mask = cv::Mat::zeros(frame.size(), CV_8UC1);
     cv::fillConvexPoly(mask, orderedIntersections, cv::Scalar(255));
