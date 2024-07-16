@@ -7,7 +7,7 @@ Hvis du lurer mer på tanken bak det jeg har gjort i modulene tenkte jeg å begy
 Men her skriver jeg hvor jeg tenker tuning kan funke og hva jeg har prøvd
 
 1. Kjøring av koden
-   etter cmake kjøres : ./finalProject ../include/Dataset/game1_clip2/game1_clip2.mp4 ../include/Dataset/game1_clip2/bounding_boxes/frame_first_bbox.txt
+   etter har lastet opp koden med tom build, så gjør cmake .. , og make så kjøres : ./finalProject ../include/Dataset/game1_clip2/game1_clip2.mp4 ../include/Dataset/game1_clip2/bounding_boxes/frame_first_bbox.txt
    i kommandolinjen, det er altså path fra build-mappen til videoen og til groundTruth for deteksjon av baller. Du må kanskje legge til path til maskene
    når du skal gjøre benchmarking av mIoU
    Du får nok heller ikke kjørt koden før du har lastet ned MultiTracker, ref neste punkt  (cliffhanger)
