@@ -12,8 +12,8 @@ class TableDetector {
     public:
         std::vector<cv::Vec2f> detectedLines;
         // make vector of circles
-        std::vector<cv::Vec3f> detectedBalls;
         std::vector<BoundingBox> boundingBoxes;
+        std::vector<cv::Point> tableCorners;
         cv::Mat roiTable;
 
         cv::Mat detectTable(cv::Mat frame);
