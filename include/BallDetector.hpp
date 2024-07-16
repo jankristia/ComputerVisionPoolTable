@@ -9,9 +9,10 @@
 
 class BallDetector {
     // // To detect balls, run the following code in main.cpp:
-    // // tableDetector.roiTable is the detected table in the TableDetector class
+    // // with tableDetector.roiTable as the detected table in the TableDetector class
+    // // this function will both detect and segment balls
     // BallDetector ballDetector;
-    // ballDetector.detectBalls(tableDetector.roiTable); 
+    // ballDetector.segmentBalls(tableDetector.roiTable); 
 
     public:
         BallDetector();
@@ -21,14 +22,14 @@ class BallDetector {
         cv::Vec3f tableColor;
         std::map<Color, int> colorToHueMap;
         
-        void detectBalls(cv::Mat frame);
+        void segmentBalls(cv::Mat frame);
 
+        void detectBalls(cv::Mat frame);
         void setTableColor(cv::Mat frame);
         bool isInRange(cv::Vec3f testColor, cv::Vec3f refrenceColor, int threshold, int indexToCheck = 0);
 
         int detectWhiteBallIndex(cv::Mat frame);
         int detectBlackBallIndex(cv::Mat frame);
-        void segmentBalls(cv::Mat frame);
 
 };
 

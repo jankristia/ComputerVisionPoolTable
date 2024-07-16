@@ -49,9 +49,10 @@ int main(int argc, char** argv) {
     BallDetector ballDetector;
     ballDetector.segmentBalls(tableDetector.roiTable);
 
-    // MeanAveragePrecision map;
-    // double averagePrecision = map.averagePrecisionCalculation(frame, groundTruthPath);
-    // std::cout << "Average Precision: " << averagePrecision << std::endl;
+    MeanAveragePrecision map;
+    map.setDetectedBoxes(ballDetector.segmentedBalls);
+    double averagePrecision = map.averagePrecisionCalculation(frame, groundTruthPath);
+    std::cout << "Average Precision: " << averagePrecision << std::endl;
    
     cv::waitKey(0);
 
