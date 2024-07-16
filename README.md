@@ -78,6 +78,8 @@ Men her skriver jeg hvor jeg tenker tuning kan funke og hva jeg har prøvd
 
    As far as jeg veit så er det som gjenstår:
    - lage top-down view som vises i videoen mens ballene trackes
+      - tableCorners-vektoren i TableDetector inneholder hjørnene av bordet, som kan brukes for 2D-view
+      - segmentedBalls-vektoren i BallDetector har Id for hva hver ball blir segmentert som, kan brukes når du tegner ballene i 2D-view
    - Lage UiO benchmarking av segmenteringen av bord/bakgrunn/ball-typene
        - Her er vel det meste av segmenteringen gjort, den må bare settes i system og testes
     - Tuning til det funker så bra du kan få det (det blir aldri bra)
@@ -88,4 +90,7 @@ Men her skriver jeg hvor jeg tenker tuning kan funke og hva jeg har prøvd
       - Forklaring på hvorfor jeg har gjort ting i de forskjellige klassene
       Men resultatene kan du ta når du har tunet bra, evt kommet på smartere løsninger:)
 
-Lykke til buddy
+NB: Jeg har skrevet meg som author i toppen av alle filene til nå, men bare endre på det så det blir 50/50. Han skrev at man måtte skrive author på alle filer
+   Og husk å skrive det drittet om hvem som har gjor thva osv i rapporten (mulig jeg gjør det og)
+
+TIL SLUTT: Lykke til buddy
