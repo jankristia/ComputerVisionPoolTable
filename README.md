@@ -64,7 +64,7 @@ Men her skriver jeg hvor jeg tenker tuning kan funke og hva jeg har prøvd
    
   3.4 MeanAveragePrecision
   
-   Dette er benchmarkingen for deteksjon av baller. sånn jeg tolket det så skal vi benchmarke kun deteksjonen av ball/ikke ball her
+   Dette er benchmarkingen for deteksjon av baller. sånn jeg tolket det så skal vi benchmarke kun deteksjonen av ball/ikke ball her.
    averagePrecisionCalculation(cv::Mat frame, std::string groundTruthPath); gjør alt av deteksjon og regning av MAP så det er bare å initialisere et objekt
    og kjøre denne. Det skal i rapporten gjøres for både første og siste bilde for alle videoen (de bildene ligger i datasettet, så må ikke via videoen)
    Jeg tenkte du kunne legge det inn når du har tunet ferdig:)
